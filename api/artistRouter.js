@@ -2,10 +2,8 @@ const express = require('express');
 const artistRouter = express.Router();
 const sqlite3 = require('sqlite3');
 const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite');
-//const dbHandler = require('../dbHandler')
 
 // VALIDATION MIDDLEWARE
-
 const validateArtist = (req, res, next) => {
   const artist = req.body.artist;
   if (!artist.name || !artist.dateOfBirth|| !artist.biography) {
@@ -24,7 +22,7 @@ artistRouter.get('/', (req, res, next) => {
     } else if(! data) {
       res.status(404).send('Artists not found');
     } else {
-      res.send({artists: data});
+      res.status(200).send({artists: data});
     }
   });
 });
@@ -37,7 +35,7 @@ artistRouter.get('/:id', (req, res, next) => {
       res.status(404).send('Artist not found');
     } else {
       console.log(data);
-      res.send({ artist : data });
+      res.status(200).send({ artist : data });
     }
   });
 });
@@ -67,7 +65,6 @@ artistRouter.post('/', validateArtist, (req, res, next) => {
 
 //DELETE
 artistRouter.delete('/:id', (req, res, next) => {
-  const artist = req.body.artist;
   db.run(`UPDATE Artist
           SET is_currently_employed = 0
           WHERE id = ${req.params.id}`,
