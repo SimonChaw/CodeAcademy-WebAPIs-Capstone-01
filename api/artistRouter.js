@@ -16,7 +16,7 @@ const validateArtist = (req, res, next) => {
 
 // GET
 artistRouter.get('/', (req, res, next) => {
-  db.all('SELECT * FROM Artist', (err, data) => {
+  db.all('SELECT * FROM Artist WHERE is_currently_employed = 1', (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else if(! data) {
@@ -34,7 +34,6 @@ artistRouter.get('/:id', (req, res, next) => {
     } else if(! data) {
       res.status(404).send('Artist not found');
     } else {
-      console.log(data);
       res.status(200).send({ artist : data });
     }
   });
@@ -48,7 +47,7 @@ artistRouter.post('/', validateArtist, (req, res, next) => {
     $name : artist.name,
     $date_of_birth : artist.dateOfBirth,
     $biography : artist.biography,
-    $is_currently_employed : artist.isCurrentlyEmployed
+    $is_currently_employed : 1
   },
   function (err) {
     if(err){

@@ -16,6 +16,21 @@ const validateSeries = (req, res, next) => {
   next();
 }
 
+seriesRouter.param('seriesId', (req, res, next, seriesId) => {
+  const sql = 'SELECT * FROM Series WHERE Series.id = $seriesId';
+  const values = {$seriesId: seriesId};
+  db.get(sql, values, (error, series) => {
+    if (error) {
+      next(error);
+    } else if (series) {
+      req.series = series;
+      next();
+    } else {
+      res.sendStatus(404);
+    }
+  });
+});
+
 //ROUTES
 
 //GET
@@ -110,10 +125,25 @@ seriesRouter.put('/:id', validateSeries, (req, res, next) => {
 /*--------------
   ISSUES
 --------------*/
+seriesRouter.param('id', (req, res, next, issueId) => {
+  const sql = 'SELECT * FROM Issue WHERE id = $issueId';
+  const values = {$issueId: issueId};
+  db.get(sql, values, (error, issue) => {
+    if (error) {
+      next(error);
+    } else if (issue) {
+      next();
+    } else {
+      res.sendStatus(404);
+    }
+  });
+});
 
 //VALIDATOR
 const validateIssue = (req, res, next) => {
   const issue = req.body.issue;
+  console.log(issue);
+  console.log(req.params.seriesId);
   if (!issue.name || !issue.issueNumber || !issue.publicationDate || !issue.artistId || !req.params.seriesId) {
     return res.sendStatus(400);
   }
@@ -122,14 +152,18 @@ const validateIssue = (req, res, next) => {
 
 //GET
 seriesRouter.get('/:seriesId/issues', (req, res, next) => {
-  db.all(`SELECT * FROM Issue WHERE series_id = ${req.params.seriesId}`, (err, data) => {
+  db.all(`SELECT  Issue.*
+          FROM Issue
+          LEFT JOIN Series
+          ON Series.id = Issue.series_id
+          WHERE Issue.series_id = ${req.params.seriesId}`, (err, data) => {
     if (err) {
       res.sendStatus(500);
-    } else if(! data) {
-      res.status(404).send('Issues not found');
-    } else {
-      res.send({issues: data});
     }
+    if(! data) {
+      res.status(404).send('Issues not found');
+    }
+    res.send({issues: data});
   });
 });
 
@@ -169,12 +203,12 @@ seriesRouter.put('/:seriesId/issues/:id', validateIssue, (req, res, next) => {
           $publication_date: issue.publicationDate,
           $artist_id: issue.artistId
         },
-      (err) => {
+      function(err){
         if(err){
-          res.sendStatus(500);
+          res.sendStatus(404);
         }
         db.get(`SELECT * FROM Issue WHERE id = ${req.params.id}`, (err, data) => {
-          if (!data) {
+          if (this.changes === 0) {
             return res.sendStatus(404);
           }
           res.status(200).send({issue: data});
@@ -186,11 +220,16 @@ seriesRouter.put('/:seriesId/issues/:id', validateIssue, (req, res, next) => {
 seriesRouter.delete('/:seriesId/issues/:id', (req, res, next) => {
   db.run(`DELETE FROM Issue
           WHERE id = ${req.params.id}`,
-      (err) => {
+      function (err){
         if(err){
+          throw err;
+        }
+        if(this.changes > 0){
+          res.sendStatus(204);
+        }else{
           res.sendStatus(404);
         }
-      res.sendStatus(204);
+
     });
 });
 
