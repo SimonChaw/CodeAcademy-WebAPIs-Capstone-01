@@ -6,7 +6,6 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
 // VALIDATION MIDDLEWARE
 const validateArtist = (req, res, next) => {
   const artist = req.body.artist;
-  console.log(artist);
   if (!artist.name || !artist.dateOfBirth|| !artist.biography) {
     return res.sendStatus(400);
   }
@@ -35,7 +34,6 @@ artistRouter.get('/:id', (req, res, next) => {
     } else if(! data) {
       res.status(404).send('Artist not found');
     } else {
-      console.log(data);
       res.status(200).send({ artist : data });
     }
   });
