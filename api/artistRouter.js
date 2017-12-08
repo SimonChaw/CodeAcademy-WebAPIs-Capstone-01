@@ -6,6 +6,7 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
 // VALIDATION MIDDLEWARE
 const validateArtist = (req, res, next) => {
   const artist = req.body.artist;
+  console.log(artist);
   if (!artist.name || !artist.dateOfBirth|| !artist.biography) {
     return res.sendStatus(400);
   }
@@ -16,7 +17,7 @@ const validateArtist = (req, res, next) => {
 
 // GET
 artistRouter.get('/', (req, res, next) => {
-  db.all('SELECT * FROM Artist', (err, data) => {
+  db.all('SELECT * FROM Artist WHERE is_currently_employed = 1', (err, data) => {
     if (err) {
       res.sendStatus(500);
     } else if(! data) {
@@ -48,7 +49,7 @@ artistRouter.post('/', validateArtist, (req, res, next) => {
     $name : artist.name,
     $date_of_birth : artist.dateOfBirth,
     $biography : artist.biography,
-    $is_currently_employed : artist.isCurrentlyEmployed
+    $is_currently_employed : 1
   },
   function (err) {
     if(err){
